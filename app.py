@@ -8,6 +8,13 @@ from email.mime.text import MIMEText
 app = FastAPI()
 
 # -----------------------------
+# Homepage route
+# -----------------------------
+@app.get("/")
+def home():
+    return {"message": "Webhook server is running!"}
+
+# -----------------------------
 # Data structure
 # -----------------------------
 class LeadData(BaseModel):
@@ -22,9 +29,9 @@ FILE_NAME = "leads.csv"
 # -----------------------------
 # Email settings
 # -----------------------------
-SENDER_EMAIL = "davidojo1349@gmail.com"
-SENDER_PASSWORD = "petb caxh fzdo ftgz"
-RECEIVER_EMAIL = "sheyiojo000@gmail.com"
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
 
 # -----------------------------
 # Webhook endpoint
@@ -32,42 +39,48 @@ RECEIVER_EMAIL = "sheyiojo000@gmail.com"
 @app.post("/webhook")
 def webhook(data: LeadData):
 
-    # -----------------------------
-    # Save to CSV
-    # -----------------------------
-    file_exists = os.path.isfile(FILE_NAME)
+    try:
 
-    with open(FILE_NAME, mode="a", newline="") as file:
-        writer = csv.writer(file)
+        # -----------------------------
+        # Save to CSV
+        # -----------------------------
+        file_exists = os.path.isfile(FILE_NAME)
 
-        if not file_exists:
-            writer.writerow(["Name", "Email"])
+        with open(FILE_NAME, mode="a", newline="") as file:
+            writer = csv.writer(file)
 
-        writer.writerow([data.name, data.email])
+            if not file_exists:
+                writer.writerow(["Name", "Email"])
 
-    print(f"Saved: {data.name}, {data.email}")
+            writer.writerow([data.name, data.email])
 
-    # -----------------------------
-    # Send email
-    # -----------------------------
-    subject = "New Lead Received"
+        print(f"Saved: {data.name}, {data.email}")
 
-    body = f"""
-    New lead submitted:
+        # -----------------------------
+        # Send email
+        # -----------------------------
+        subject = "New Lead Received"
 
-    Name: {data.name}
-    Email: {data.email}
-    """
+        body = f"""
+New lead submitted:
 
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECEIVER_EMAIL
+Name: {data.name}
+Email: {data.email}
+"""
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.send_message(msg)
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = RECEIVER_EMAIL
 
-    print("Email sent!")
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.send_message(msg)
 
-    return {"status": "success"}
+        print("Email sent!")
+
+        return {"status": "success"}
+
+    except Exception as e:
+        print("Error:", str(e))
+        return {"status": "error", "message": str(e)}
