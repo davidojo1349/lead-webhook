@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import csv
 import os
-import smtplib
-from email.mime.text import MIMEText
+import requests
 
 app = FastAPI()
 
@@ -59,25 +58,25 @@ def webhook(data: LeadData):
         # -----------------------------
         # Send email
         # -----------------------------
-        subject = "New Lead Received"
+        response = requests.post(
+    "https://api.resend.com/emails",
+    headers={
+        "Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}",
+        "Content-Type": "application/json"
+    },
+    json={
+        "from": "onboarding@resend.dev",
+        "to": RECEIVER_EMAIL,
+        "subject": "New Lead Received",
+        "html": f"""
+        <h2>New Lead Submitted</h2>
+        <p><strong>Name:</strong> {data.name}</p>
+        <p><strong>Email:</strong> {data.email}</p>
+        """
+    }
+)
 
-        body = f"""
-New lead submitted:
-
-Name: {data.name}
-Email: {data.email}
-"""
-
-        msg = MIMEText(body)
-        msg["Subject"] = subject
-        msg["From"] = SENDER_EMAIL
-        msg["To"] = RECEIVER_EMAIL
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.send_message(msg)
-
-        print("Email sent!")
+print(response.text)
 
         return {"status": "success"}
 
