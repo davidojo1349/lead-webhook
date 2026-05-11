@@ -59,24 +59,24 @@ def webhook(data: LeadData):
         # Send email
         # -----------------------------
         response = requests.post(
-    "https://api.resend.com/emails",
-    headers={
-        "Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}",
-        "Content-Type": "application/json"
-    },
-    json={
-        "from": "onboarding@resend.dev",
-        "to": RECEIVER_EMAIL,
-        "subject": "New Lead Received",
-        "html": f"""
-        <h2>New Lead Submitted</h2>
-        <p><strong>Name:</strong> {data.name}</p>
-        <p><strong>Email:</strong> {data.email}</p>
-        """
-    }
-)
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": "onboarding@resend.dev",
+                "to": RECEIVER_EMAIL,
+                "subject": "New Lead Received",
+                "html": f"""
+                <h2>New Lead Submitted</h2>
+                <p><strong>Name:</strong> {data.name}</p>
+                <p><strong>Email:</strong> {data.email}</p>
+                """
+            }
+        )
 
-print(response.text)
+        print(response.text)
 
         return {"status": "success"}
 
